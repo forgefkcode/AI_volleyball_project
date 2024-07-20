@@ -5,17 +5,15 @@ import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.os.Bundle
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
-import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class MainActivity : AppCompatActivity() {
+class CameraPreviewActivity : AppCompatActivity() {
 
     private lateinit var textureView: TextureView
     private lateinit var cameraManager: CameraManager
@@ -25,18 +23,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_camera_preview)
 
         textureView = findViewById(R.id.textureView)
         cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
 
-        findViewById<Button>(R.id.btnStartCamera).setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
-            } else {
-                setupCameraPreview()
-            }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 0)
+        } else {
+            setupCameraPreview()
         }
     }
 
@@ -58,7 +54,6 @@ class MainActivity : AppCompatActivity() {
 
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-                Log.d("Camera", "SurfaceTexture available")
                 openCamera(cameraId)
             }
 
@@ -74,22 +69,18 @@ class MainActivity : AppCompatActivity() {
                 != PackageManager.PERMISSION_GRANTED) {
                 return
             }
-            Log.d("Camera", "Opening camera: $cameraId")
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
-                    Log.d("Camera", "Camera opened")
                     cameraDevice = camera
                     startPreview()
                 }
 
                 override fun onDisconnected(camera: CameraDevice) {
-                    Log.d("Camera", "Camera disconnected")
                     camera.close()
                     cameraDevice = null
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
-                    Log.e("Camera", "Camera error: $error")
                     camera.close()
                     cameraDevice = null
                 }
@@ -100,11 +91,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startPreview() {
-        val surfaceTexture = textureView.surfaceTexture
-        if (surfaceTexture == null) {
-            Log.e("Camera", "SurfaceTexture is null")
-            return
-        }
+        val surfaceTexture = textureView.surfaceTexture ?: return
 
         surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
         val surface = Surface(surfaceTexture)
@@ -115,15 +102,13 @@ class MainActivity : AppCompatActivity() {
 
             cameraDevice!!.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
-                    Log.d("Camera", "Capture session configured")
                     captureSession = session
                     captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
                     captureSession!!.setRepeatingRequest(captureRequestBuilder.build(), null, null)
                 }
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
-                    Log.e("Camera", "Failed to configure capture session")
-                    Toast.makeText(this@MainActivity, "Failed to configure camera", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CameraPreviewActivity, "Failed to configure camera", Toast.LENGTH_SHORT).show()
                 }
             }, null)
         } catch (e: CameraAccessException) {

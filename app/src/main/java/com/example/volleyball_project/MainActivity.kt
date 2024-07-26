@@ -11,9 +11,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val startCaptureButton: Button = findViewById(R.id.start_capture_button)
-        startCaptureButton.setOnClickListener {
+        val startCameraButton: Button = findViewById(R.id.startCameraButton)
+        val historyButton: Button = findViewById(R.id.historyButton)
+
+        startCameraButton.setOnClickListener {
             val intent = Intent(this, CameraActivity::class.java)
+            startActivity(intent)
+        }
+
+        historyButton.setOnClickListener {
+            val intent = Intent(this, HistoryActivity::class.java)
             startActivity(intent)
         }
     }
